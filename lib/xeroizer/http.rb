@@ -98,8 +98,6 @@ module Xeroizer
 
           raw_body = params.delete(:raw_body) ? body : {:xml => body}
 
-          # logger.info("REQUEST XML: #{raw_body}")
-
           response = case method
             when :get   then    client.get(uri.request_uri, headers)
             when :post  then    client.post(uri.request_uri, raw_body, headers)
@@ -125,6 +123,11 @@ module Xeroizer
             else
               handle_unknown_response_error!(response)
           end
+        rescue Xeroizer::OAuth::NonceUsed => exception
+          raise if attempts > nonce_used_max_attempts
+          logger.info("Nonce used: " + exception.to_s) if self.logger
+          sleep_for(1)
+          retry
         rescue Xeroizer::OAuth::RateLimitExceeded
           if self.rate_limit_sleep
             raise if attempts > rate_limit_max_attempts
@@ -161,6 +164,7 @@ module Xeroizer
             when "token_rejected"               then raise OAuth::TokenInvalid.new(description)
             when "rate limit exceeded"          then raise OAuth::RateLimitExceeded.new(description)
             when "consumer_key_unknown"         then raise OAuth::ConsumerKeyUnknown.new(description)
+            when "nonce_used"                   then raise OAuth::NonceUsed.new(description)
             else raise OAuth::UnknownError.new(problem + ':' + description)
           end
         else
@@ -177,12 +181,8 @@ module Xeroizer
 
         # doc = REXML::Document.new(raw_response, :ignore_whitespace_nodes => :all)
         doc = Nokogiri::XML(raw_response)
-        if doc && doc.root && (doc.root.name == "ApiException" || doc.root.name == 'Response')
-          # p doc.root.xpath("Type").text
-          # p doc.root.xpath("Message").text
-          # p raw_response
-          # p doc
-          # p request_body
+
+        if doc && doc.root && doc.root.name == "ApiException"
           raise ApiException.new(doc.root.xpath("Type").text,
                                  doc.root.xpath("Message").text,
                                  raw_response,

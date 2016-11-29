@@ -20,7 +20,7 @@ module Xeroizer
       class_inheritable_attributes :xml_node_name
       class_inheritable_attributes :skip_xml_node_name
 
-      DEFAULT_RECORDS_PER_BATCH_SAVE = 2000
+      DEFAULT_RECORDS_PER_BATCH_SAVE = 50
 
       include BaseModelHttpProxy
 
@@ -185,6 +185,7 @@ module Xeroizer
             if model_name == response_model_name
               @response = response
               parse_records(response, elements, paged_records_requested?(options), (options[:base_module] || Xeroizer::Record))
+              # parse_records(response, elements, paged_records_requested?(options))
             end
           end
         end
@@ -203,6 +204,7 @@ module Xeroizer
 
       # Parse the records part of the XML response and builds model instances as necessary.
         def parse_records(response, elements, paged_results, base_module)
+        # def parse_records(response, elements, paged_results)
           elements.each do | element |
             new_record = model_class.build_from_node(element, self, base_module)
             if element.attribute('status').try(:value) == 'ERROR'

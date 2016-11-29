@@ -6,16 +6,18 @@ require 'xeroizer/version'
 Gem::Specification.new do |s|
   s.name = "xeroizer"
   s.version = Xeroizer::VERSION.dup
-  s.date = "2015-08-31"
+  s.date = "2016-03-01"
   s.authors = ["Wayne Robinson"]
   s.email = "wayne.robinson@gmail.com"
   s.summary = "Xero library"
   s.description = "Ruby library for the Xero accounting system API."
   s.homepage = "http://github.com/waynerobinson/xeroizer"
   s.licenses = ["MIT"]
+
   s.files = Dir["LICENSE.txt", "README.md", 'lib/**/*']
   s.test_files = `git ls-files -- test/*`.split("\n")
   s.require_paths = ["lib"]
+
   s.add_development_dependency "bundler", "~> 1.5"
   s.add_development_dependency "rake"
   s.add_development_dependency "mocha"
