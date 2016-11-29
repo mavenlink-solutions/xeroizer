@@ -25,6 +25,10 @@ module Xeroizer
         validates_presence_of :deduction_type_id
         validates_presence_of :calculation_type
         validates_inclusion_of :calculation_type, :in => DEDUCTION_TYPE_CALCULATION_TYPES
+
+        # US Payroll fields
+        decimal :employee_max
+
         validates_presence_of :earning_rate_id, :calculation_type, :unless => :new_record?
       end
     end

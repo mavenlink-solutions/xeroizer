@@ -5,7 +5,9 @@ module Xeroizer
       class EmployeeModel < PayrollBaseModel
 
         set_permissions :read, :write, :update
-
+        def create_method
+          :http_post
+        end
       end
 
       class Employee < PayrollBase
@@ -14,7 +16,7 @@ module Xeroizer
 
         guid          :employee_id
         string        :status
-        string        :title
+        # string        :title
         string        :first_name
         string        :middle_names
         string        :last_name
@@ -48,6 +50,24 @@ module Xeroizer
         validates_length_of :middle_names, :phone, :mobile, :twitter_user_name, :occupation, length: { maximum: 50 }, :allow_blanks => true
         validates_length_of :email, :classification, length: { maximum: 100 }, :allow_blanks => true
         validates_inclusion_of :gender, :in => %w{M F}, :message => "%{value} is not a valid gender value", :allow_blanks => true
+
+        # US Payroll fields
+        string        :job_title
+        string        :employee_number
+        string        :social_security_number
+        guid          :pay_schedule_id
+        string        :employment_basis
+        guid          :holiday_group_id
+        boolean       :is_authorised_to_approve_time_off
+
+        has_many      :salary_and_wages
+        has_many      :work_locations
+        has_one       :payment_method, :model_name => "PaymentMethod"
+        has_one       :mailing_address, :internal_name_singular => "mailing_address", :model_name => "MailingAddress"
+
+        validates_presence_of :first_name, :last_name, :unless => :new_record?
+        validates_presence_of :date_of_birth
+        validates_presence_of :pay_schedule_id, :if => Proc.new { | record | !record.salary_and_wages.blank? }
       end
     end
   end

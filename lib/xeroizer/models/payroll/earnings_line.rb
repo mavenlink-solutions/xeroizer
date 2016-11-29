@@ -14,21 +14,18 @@ module Xeroizer
           'ANNUALSALARY' => 'If the employee receives a salary, the annual salary amount and units of work per week are added to the earnings line'
         } unless defined?(EARNINGS_RATE_CALCULATION_TYPE)
 
-        EARNINGS_RATE_CALCULATION_TYPES = EARNINGS_RATE_CALCULATION_TYPE.keys.sort
+        # US Payroll fields
+        guid          :earnings_type_id
+        decimal       :units_or_hours
+        decimal       :amount
+        decimal       :fixed_amount
+        decimal       :number_of_units
 
-        guid          :earnings_rate_id, :api_name => 'EarningsRateID'
-
-        string        :calculation_type
-
-        decimal       :number_of_units_per_week
-        decimal       :annual_salary
-        decimal       :rate_per_unit
-        decimal       :normal_number_of_units
-
-        validates_presence_of :earnings_rate_id
-        validates_presence_of :calculation_type
-        validates_inclusion_of :calculation_type, :in => EARNINGS_RATE_CALCULATION_TYPES
+        validates_presence_of :earning_rate_id, :if => Proc.new { |el| el.earnings_type_id.blank? }
+        validates_presence_of :earnings_type_id, :if => Proc.new { |el| el.earning_rate_id.blank? }
+        validates_inclusion_of :calculation_type, :in => EARNINGS_RATE_CALCULATION_TYPE, :unless => :new_record?
       end
+
     end
   end
 end

@@ -68,21 +68,13 @@ module Xeroizer
           # Turn a record into its XML representation.
           def to_xml(b = Builder::XmlMarkup.new(:indent => 2))
             optional_root_tag(parent.class.optional_xml_root_name, b) do |b|
-              if parent.class.skip_xml_node_name
+              b.tag!(model.class.xml_node_name || model.model_name) {
                 attributes.each do | key, value |
                   field = self.class.fields[key]
                   value = self.send(key) if field[:calculated]
                   xml_value_from_field(b, field, value) unless value.nil?
                 end
-              else
-                b.tag!(parent.class.xml_node_name || parent.model_name) {
-                  attributes.each do | key, value |
-                    field = self.class.fields[key]
-                    value = self.send(key) if field[:calculated]
-                    xml_value_from_field(b, field, value) unless value.nil?
-                  end
-                }
-              end
+              }
             end
           end
 
@@ -143,7 +135,16 @@ module Xeroizer
                   nil
             end
           end
-        end
+
+          def association_to_xml(association_name)
+            builder = Builder::XmlMarkup.new(indent: 2)
+            records = send(association_name)
+
+            optional_root_tag(association_name.to_s.camelize, builder) do |b|
+              records.each { |record| record.to_xml(b) }
+            end
+          end
       end
     end
   end
+end

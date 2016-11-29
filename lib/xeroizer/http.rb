@@ -14,6 +14,8 @@
 
 module Xeroizer
   module Http
+    class BadResponse < StandardError; end
+    RequestInfo = Struct.new(:url, :headers, :params, :body)
 
     ACCEPT_MIME_MAP = {
       :pdf  => 'application/pdf',
@@ -54,11 +56,17 @@ module Xeroizer
       def http_request(client, method, url, body, params = {})
         # headers = {'Accept-Encoding' => 'gzip, deflate'}
 
-        headers = { 'charset' => 'utf-8' }
+        headers = self.default_headers.merge({ 'charset' => 'utf-8' })
+
+        # include the unitdp query string parameter
+        params.merge!(unitdp_param(url))
 
         if method != :get
           headers['Content-Type'] ||= "application/x-www-form-urlencoded"
         end
+
+        content_type = params.delete(:content_type)
+        headers['Content-Type'] = content_type if content_type
 
         # HAX.  Xero completely misuse the If-Modified-Since HTTP header.
         headers['If-Modified-Since'] = params.delete(:ModifiedAfter).utc.strftime("%Y-%m-%dT%H:%M:%S") if params[:ModifiedAfter]
@@ -77,29 +85,29 @@ module Xeroizer
           url += "?" + params.map {|key,value| "#{CGI.escape(key.to_s)}=#{CGI.escape(value.to_s)}"}.join("&")
         end
 
-        uri   = URI.parse(url)
+        uri = URI.parse(url)
 
         attempts = 0
 
+        request_info = RequestInfo.new(url, headers, params, body)
+        before_request.call(request_info) if before_request
+
         begin
           attempts += 1
-          logger.info("\n== [#{Time.now.to_s}] XeroGateway Request: #{method.to_s.upcase} #{uri.request_uri} ") if self.logger
+          logger.info("XeroGateway Request: #{method.to_s.upcase} #{uri.request_uri}") if self.logger
+
+          raw_body = params.delete(:raw_body) ? body : {:xml => body}
+
+          # logger.info("REQUEST XML: #{raw_body}")
 
           response = case method
             when :get   then    client.get(uri.request_uri, headers)
-            when :post  then    client.post(uri.request_uri, { :xml => body }, headers)
-            when :put   then    client.put(uri.request_uri, { :xml => body }, headers)
+            when :post  then    client.post(uri.request_uri, raw_body, headers)
+            when :put   then    client.put(uri.request_uri, raw_body, headers)
           end
 
-          if self.logger
-            logger.info("== [#{Time.now.to_s}] XeroGateway Response (#{response.code})")
-
-            unless response.code.to_i == 200
-              logger.info("== #{uri.request_uri} Response Body \n\n #{response.plain_body} \n == End Response Body")
-            else
-              logger.debug("== #{uri.request_uri} Response Body \n\n #{response.plain_body} \n == End Response Body")
-            end
-          end
+          log_response(response, uri)
+          after_request.call(request_info, response) if after_request
 
           case response.code.to_i
             when 200
@@ -115,12 +123,12 @@ module Xeroizer
             when 503
               handle_oauth_error!(response)
             else
-              raise "Unknown response code: #{response.code.to_i}"
+              handle_unknown_response_error!(response)
           end
         rescue Xeroizer::OAuth::RateLimitExceeded
           if self.rate_limit_sleep
             raise if attempts > rate_limit_max_attempts
-            logger.info("== Rate limit exceeded, retrying") if self.logger
+            logger.info("Rate limit exceeded, retrying") if self.logger
             sleep_for(self.rate_limit_sleep)
             retry
           else
@@ -129,19 +137,34 @@ module Xeroizer
         end
       end
 
-      def handle_oauth_error!(response)
+    def log_response(response, uri)
+      if self.logger
+        logger.info("XeroGateway Response (#{response.code})")
+        logger.add(response.code.to_i == 200 ? Logger::DEBUG : Logger::INFO) {
+          "#{uri.request_uri}\n== Response Body\n\n#{response.plain_body}\n== End Response Body"
+        }
+      end
+    end
+
+    def handle_oauth_error!(response)
         error_details = CGI.parse(response.plain_body)
         description   = error_details["oauth_problem_advice"].first
+        problem = error_details["oauth_problem"].first
 
         # see http://oauth.pbworks.com/ProblemReporting
         # In addition to token_expired and token_rejected, Xero also returns
         # 'rate limit exceeded' when more than 60 requests have been made in
         # a second.
-        case (error_details["oauth_problem"].first)
-          when "token_expired"        then raise OAuth::TokenExpired.new(description)
-          when "token_rejected"       then raise OAuth::TokenInvalid.new(description)
-          when "rate limit exceeded"  then raise OAuth::RateLimitExceeded.new(description)
-          else raise OAuth::UnknownError.new(error_details["oauth_problem"].first + ':' + description)
+        if problem
+          case (problem)
+            when "token_expired"                then raise OAuth::TokenExpired.new(description)
+            when "token_rejected"               then raise OAuth::TokenInvalid.new(description)
+            when "rate limit exceeded"          then raise OAuth::RateLimitExceeded.new(description)
+            when "consumer_key_unknown"         then raise OAuth::ConsumerKeyUnknown.new(description)
+            else raise OAuth::UnknownError.new(problem + ':' + description)
+          end
+        else
+          raise OAuth::UnknownError.new("Xero API may be down or the way OAuth errors are provided by Xero may have changed.")
         end
       end
 
@@ -154,8 +177,7 @@ module Xeroizer
 
         # doc = REXML::Document.new(raw_response, :ignore_whitespace_nodes => :all)
         doc = Nokogiri::XML(raw_response)
-
-        if doc && doc.root && doc.root.name == "ApiException"
+        if doc && doc.root && (doc.root.name == "ApiException" || doc.root.name == 'Response')
           # p doc.root.xpath("Type").text
           # p doc.root.xpath("Message").text
           # p raw_response
@@ -168,10 +190,8 @@ module Xeroizer
                                  request_body)
 
         else
-          raise "Unparseable 400 Response: #{raw_response}"
-
+          raise BadResponse.new("Unparseable 400 Response: #{raw_response}")
         end
-
       end
 
       def handle_object_not_found!(response, request_url)
@@ -182,9 +202,20 @@ module Xeroizer
         end
       end
 
+      def handle_unknown_response_error!(response)
+        raise BadResponse.new("Unknown response code: #{response.code.to_i}")
+      end
+
       def sleep_for(seconds = 1)
         sleep seconds
       end
 
+      # unitdp query string parameter to be added to request params
+      # when the application option has been set and the model has line items
+      # http://developer.xero.com/documentation/advanced-docs/rounding-in-xero/#unitamount
+      def unitdp_param(request_url)
+        models = [/Invoices/, /CreditNotes/, /BankTransactions/, /Receipts/]
+        self.unitdp == 4 && models.any?{ |m| request_url =~ m } ? {:unitdp => 4} : {}
+      end
   end
 end
