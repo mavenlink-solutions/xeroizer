@@ -1,15 +1,15 @@
 module Xeroizer
   module Record
     module Payroll
-    
+
       class EmployeeModel < PayrollBaseModel
-          
+
         set_permissions :read, :write, :update
-          
+
       end
-      
+
       class Employee < PayrollBase
-        
+
         set_primary_key :employee_id
 
         guid          :employee_id
@@ -34,7 +34,7 @@ module Xeroizer
         string        :employee_group_name
         date          :termination_date
         datetime_utc  :updated_date_utc, :api_name => 'UpdatedDateUTC'
-  
+
         has_many      :bank_accounts
         has_one       :home_address, :internal_name_singular => "home_address", :model_name => "HomeAddress"
         has_one       :tax_declaration, :internal_name_singular => "tax_declaration", :model_name => "TaxDeclaration"
@@ -49,7 +49,6 @@ module Xeroizer
         validates_length_of :email, :classification, length: { maximum: 100 }, :allow_blanks => true
         validates_inclusion_of :gender, :in => %w{M F}, :message => "%{value} is not a valid gender value", :allow_blanks => true
       end
-
-    end 
+    end
   end
 end

@@ -1,13 +1,13 @@
 module Xeroizer
   module Record
     module Payroll
-    
+
       class BankAccountModel < PayrollBaseModel
-          
+
       end
-      
+
       class BankAccount < PayrollBase
-        
+
         string      :statement_text
         string      :account_name
         string      :bsb, :api_name => 'BSB'
@@ -22,6 +22,6 @@ module Xeroizer
         validates_length_of :account_number, length: { maximum: 9 }, :allow_blanks => true
       end
 
-    end 
+    end
   end
 end

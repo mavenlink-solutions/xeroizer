@@ -1,19 +1,20 @@
 module Xeroizer
   module Record
     module Payroll
-    
+
       class TaxDeclarationModel < PayrollBaseModel
+
       end
-      
+
       class TaxDeclaration < PayrollBase
-        
+
         EMPLOYMENT_BASIS = {
           'FULLTIME' => '',
           'PARTTIME' => '',
           'CASUAL' => '',
           'LABOURHIRE' => '',
           'SUPERINCOMESTREAM' => ''
-          
+
         } unless defined?(EMPLOYMENT_BASIS)
         EMPLOYMENT_BASISES = EMPLOYMENT_BASIS.keys.sort
 
@@ -26,8 +27,9 @@ module Xeroizer
         TFN_EXEMPTION_TYPES = TFN_EXEMPTION_TYPE.keys.sort
 
         guid        :employee_id, :api_name => 'EmployeeID'
+
         string      :tax_file_number
-        
+
         string      :tfn_exemption_type, :api_name => 'TFNExemptionType'
         string      :employment_basis
 
@@ -46,7 +48,6 @@ module Xeroizer
         validates_inclusion_of :employment_basis, :in => EMPLOYMENT_BASISES
         validates_inclusion_of :tfn_exemption_type, :in => TFN_EXEMPTION_TYPES, :allow_blanks => true
       end
-
-    end 
+    end
   end
 end

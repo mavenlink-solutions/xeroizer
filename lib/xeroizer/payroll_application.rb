@@ -1,6 +1,5 @@
 module Xeroizer
   class PayrollApplication
-
     attr_reader :application
 
     # Factory for new Payroll BaseModel instances with the class name `record_type`.

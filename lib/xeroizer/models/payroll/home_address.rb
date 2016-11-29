@@ -1,13 +1,13 @@
 module Xeroizer
   module Record
     module Payroll
-    
+
       class HomeAddressModel < PayrollBaseModel
 
       end
-      
+
       class HomeAddress < PayrollBase
-        
+
         STATE_ABBREVIATION = {
           'ACT' => 'Australian Capital Territory',
           'NSW' => 'New South Wales',
@@ -34,7 +34,6 @@ module Xeroizer
         validates_inclusion_of :region, :in => STATE_ABBREVIATIONS, :allow_blanks => true
         validates_length_of :postal_code, length: { maximum: 4 }, :allow_blanks => true
       end
-
-    end 
+    end
   end
 end

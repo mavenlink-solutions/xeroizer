@@ -62,22 +62,18 @@ require 'xeroizer/models/payroll/super_line'
 require 'xeroizer/models/payroll/reimbursement_line'
 require 'xeroizer/models/payroll/leave_line'
 require 'xeroizer/models/payroll/pay_template'
-
 require 'xeroizer/models/payroll/super_membership'
 require 'xeroizer/models/payroll/tax_declaration'
 require 'xeroizer/models/payroll/home_address'
 require 'xeroizer/models/payroll/bank_account'
 require 'xeroizer/models/payroll/employee'
-
 require 'xeroizer/models/payroll/super_fund'
 require 'xeroizer/models/payroll/payroll_calendar'
-
 require 'xeroizer/models/payroll/earnings_rate'
 require 'xeroizer/models/payroll/deduction_type'
 require 'xeroizer/models/payroll/reimbursement_type'
 require 'xeroizer/models/payroll/leave_type'
 require 'xeroizer/models/payroll/pay_items'
-
 require 'xeroizer/models/payroll/number_of_unit'
 require 'xeroizer/models/payroll/timesheet_line'
 require 'xeroizer/models/payroll/timesheet'

@@ -1,11 +1,11 @@
 module Xeroizer
   module Record
     module Payroll
-    
+
       class SuperLineModel < PayrollBaseModel
-          
+
       end
-      
+
       class SuperLine < PayrollBase
 
         SUPERANNUATION_CONTRIBUTION_TYPE = {
@@ -15,7 +15,7 @@ module Xeroizer
           'EMPLOYEE' => 'Post-tax employee superannuation contribution'
         } unless defined?(SUPERANNUATION_CONTRIBUTION_TYPE)
         SUPERANNUATION_CONTRIBUTION_TYPES = SUPERANNUATION_CONTRIBUTION_TYPE.keys.sort
-        
+
         SUPERANNUATION_CALCULATION_TYPE = {
           'FIXEDAMOUNT' => 'For voluntary superannuation, the contribution amount can be a fixed rate or a percentage of earnings. For SGC contributions it must be a percentage',
           'PERCENTAGEOFEARNINGS' => '',
@@ -37,7 +37,6 @@ module Xeroizer
         validates_inclusion_of :contribution_type, :in => SUPERANNUATION_CONTRIBUTION_TYPES
         validates_inclusion_of :calculation_type, :in => SUPERANNUATION_CALCULATION_TYPES
       end
-
-    end 
+    end
   end
 end

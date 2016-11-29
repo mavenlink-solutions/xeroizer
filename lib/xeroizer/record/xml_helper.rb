@@ -27,6 +27,7 @@ module Xeroizer
                 when :date        then Date.parse(element.text)
                 when :datetime    then Time.parse(element.text)
                 when :datetime_utc then ActiveSupport::TimeZone['UTC'].parse(element.text).utc
+
                 when :belongs_to
                   model_name = field[:model_name] ? field[:model_name].to_sym : element.name.to_sym
                   base_module.const_get(model_name).build_from_node(element, parent, base_module)
@@ -140,12 +141,9 @@ module Xeroizer
               when :has_one
                   value.to_xml(b)
                   nil
-
             end
           end
-
+        end
       end
-
     end
   end
-end
