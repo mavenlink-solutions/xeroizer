@@ -5,6 +5,10 @@ module Xeroizer
       class TimesheetModel < PayrollBaseModel
         set_optional_xml_root_name 'Timesheets'
         set_permissions :read, :write, :update
+
+        def create_method
+          :http_post
+        end
       end
 
       class Timesheet < PayrollBase

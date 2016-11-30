@@ -91,8 +91,8 @@ module Xeroizer
 
           define_method "#{internal_field_name}=".to_sym do | value |
 
-            # record_class = (options[:base_module] || Xeroizer::Record).const_get(model_name)
-            record_class = Xeroizer::Record.const_get(model_name)
+            record_class = (options[:base_module] || Xeroizer::Record).const_get(model_name)
+            # record_class = Xeroizer::Record.const_get(model_name)
             case value
               when Hash
                 self.attributes[field_name] = ((association_type == :has_many) ? [] : nil)

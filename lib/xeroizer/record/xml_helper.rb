@@ -27,7 +27,6 @@ module Xeroizer
                 when :date        then Date.parse(element.text)
                 when :datetime    then Time.parse(element.text)
                 when :datetime_utc then ActiveSupport::TimeZone['UTC'].parse(element.text).utc
-
                 when :belongs_to
                   model_name = field[:model_name] ? field[:model_name].to_sym : element.name.to_sym
                   base_module.const_get(model_name).build_from_node(element, parent, base_module)
@@ -42,9 +41,15 @@ module Xeroizer
                   end
 
                 when :has_one
-                  sub_field_name = field[:model_name] ? field[:model_name].to_sym : element.children.first.name.to_sym
-                  sub_parent = record.new_model_class(sub_field_name)
-                  base_module.const_get(sub_field_name).build_from_node(element, sub_parent, base_module)
+                  if element.element_children.size > 0
+                    sub_field_name = field[:model_name] ? field[:model_name].to_sym : element.children.first.name.to_sym
+                    sub_parent = record.new_model_class(sub_field_name)
+                    element.children.inject({}) do | hash, element |
+                      aa = base_module.const_get(sub_field_name).build_from_node(element, sub_parent, base_module)
+                      hash[element.name.to_s.underscore.to_sym] = aa[element.name.to_s.underscore.to_sym]
+                      hash
+                    end
+                  end
 
               end
               if field[:calculated]
@@ -68,15 +73,24 @@ module Xeroizer
           # Turn a record into its XML representation.
           def to_xml(b = Builder::XmlMarkup.new(:indent => 2))
             optional_root_tag(parent.class.optional_xml_root_name, b) do |b|
-              b.tag!(model.class.xml_node_name || model.model_name) {
+              if parent.class.skip_xml_node_name
                 attributes.each do | key, value |
                   field = self.class.fields[key]
                   value = self.send(key) if field[:calculated]
                   xml_value_from_field(b, field, value) unless value.nil?
                 end
-              }
+              else
+                b.tag!(parent.class.xml_node_name || parent.model_name) {
+                  attributes.each do | key, value |
+                    field = self.class.fields[key]
+                    value = self.send(key) if field[:calculated]
+                    xml_value_from_field(b, field, value) unless value.nil?
+                  end
+                }
+              end
             end
           end
+
 
         protected
 

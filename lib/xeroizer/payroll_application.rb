@@ -22,6 +22,7 @@ module Xeroizer
     record :PayItems
     record :PayrollCalendar
     record :Timesheet
+    record :TimesheetLine
     record :NumberOfUnit
     record :PayRun
     record :Paystub

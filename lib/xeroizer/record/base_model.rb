@@ -68,6 +68,10 @@ module Xeroizer
         def set_optional_xml_root_name(optional_root_name)
           self.optional_xml_root_name = optional_root_name
         end
+
+        def set_skip_xml_node_name(skip_xml_node_name=false)
+          self.skip_xml_node_name = skip_xml_node_name
+        end
       end
 
       public
