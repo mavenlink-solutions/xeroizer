@@ -14,7 +14,7 @@ module Xeroizer
 
         has_many      :number_of_units
 
-        validates_presence_of :earnings_rate_id
+        validates_presence_of :earnings_type_id
       end
 
     end
