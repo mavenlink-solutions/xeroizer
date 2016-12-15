@@ -3,7 +3,8 @@ module Xeroizer
     module Payroll
 
       class TimesheetModel < PayrollBaseModel
-        set_optional_xml_root_name 'Timesheets'
+        # set_optional_xml_root_name 'Timesheets'
+
         set_permissions :read, :write, :update
 
         def create_method
