@@ -36,7 +36,7 @@ module Xeroizer
         :request_token_path => "/oauth/RequestToken",
         :access_token_path  => "/oauth/AccessToken",
         :authorize_path     => "/oauth/Authorize",
-        :ca_file            => File.expand_path(File.join(File.dirname(__FILE__), 'ca-certificates.crt'))
+        #:ca_file            => File.expand_path(File.join(File.dirname(__FILE__), 'ca-certificates.crt'))
       }.freeze
     end
 
