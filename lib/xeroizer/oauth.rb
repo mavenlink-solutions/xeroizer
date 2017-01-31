@@ -23,7 +23,6 @@ module Xeroizer
   # http://github.com/jnunemaker/twitter/
 
   class OAuth
-
     class TokenExpired < StandardError; end
     class TokenInvalid < StandardError; end
     class RateLimitExceeded < StandardError; end

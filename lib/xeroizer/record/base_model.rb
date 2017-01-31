@@ -18,6 +18,7 @@ module Xeroizer
       class_inheritable_attributes :xml_root_name
       class_inheritable_attributes :optional_xml_root_name
       class_inheritable_attributes :xml_node_name
+      class_inheritable_attributes :skip_xml_node_name
 
       DEFAULT_RECORDS_PER_BATCH_SAVE = 50
 
@@ -68,6 +69,9 @@ module Xeroizer
           self.optional_xml_root_name = optional_root_name
         end
 
+        def set_skip_xml_node_name(skip_xml_node_name=false)
+          self.skip_xml_node_name = skip_xml_node_name
+        end
       end
 
       public
@@ -184,7 +188,8 @@ module Xeroizer
           Response.parse(response_xml, options) do | response, elements, response_model_name |
             if model_name == response_model_name
               @response = response
-              parse_records(response, elements, paged_records_requested?(options))
+              parse_records(response, elements, paged_records_requested?(options), (options[:base_module] || Xeroizer::Record))
+              # parse_records(response, elements, paged_records_requested?(options))
             end
           end
         end
@@ -202,9 +207,10 @@ module Xeroizer
 
 
       # Parse the records part of the XML response and builds model instances as necessary.
-        def parse_records(response, elements, paged_results)
+        def parse_records(response, elements, paged_results, base_module)
+        # def parse_records(response, elements, paged_results)
           elements.each do | element |
-            new_record = model_class.build_from_node(element, self)
+            new_record = model_class.build_from_node(element, self, base_module)
             if element.attribute('status').try(:value) == 'ERROR'
               new_record.errors = []
               element.xpath('.//ValidationError').each do |err|

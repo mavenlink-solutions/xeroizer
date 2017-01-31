@@ -115,6 +115,8 @@ module Xeroizer
             when 401
               handle_oauth_error!(response)
             when 404
+              p response
+              p url
               handle_object_not_found!(response, url)
             when 503
               handle_oauth_error!(response)
@@ -171,7 +173,6 @@ module Xeroizer
       end
 
       def handle_error!(response, request_body)
-
         raw_response = response.plain_body
 
         # XeroGenericApplication API Exceptions *claim* to be UTF-16 encoded, but fail REXML/Iconv parsing...
@@ -182,7 +183,6 @@ module Xeroizer
         doc = Nokogiri::XML(raw_response)
 
         if doc && doc.root && doc.root.name == "ApiException"
-
           raise ApiException.new(doc.root.xpath("Type").text,
                                  doc.root.xpath("Message").text,
                                  raw_response,
@@ -190,11 +190,8 @@ module Xeroizer
                                  request_body)
 
         else
-
           raise BadResponse.new("Unparseable 400 Response: #{raw_response}")
-
         end
-
       end
 
       def handle_object_not_found!(response, request_url)
@@ -220,6 +217,5 @@ module Xeroizer
         models = [/Invoices/, /CreditNotes/, /BankTransactions/, /Receipts/]
         self.unitdp == 4 && models.any?{ |m| request_url =~ m } ? {:unitdp => 4} : {}
       end
-
   end
 end
